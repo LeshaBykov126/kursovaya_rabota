@@ -1,66 +1,76 @@
 import json
-import os
-from abc import ABC
 
 import requests
+
 from utils.abstract_class import AbstractJobPlatform
 
 
-class SuperJobPlatform(AbstractJobPlatform, ABC):
-    """ Класс для работы с сайтом superjob """
+class SuperJobPlatform(AbstractJobPlatform):
+    """ Класс для работы с сайтом superjob.ru """
+
     def __init__(self, keyword, count_vacancy):
-        self.count_vacancy = count_vacancy
         self.keyword = keyword
-        self.salary_min = None
+        self.count_vacancy = count_vacancy
 
     def connect(self):
-        """ Подключение к API superjob """
+        """ Подключение к API superjob.ru """
         headers = {
-            'Host': 'api.superjob.ru',
-            'X-Api-App-Id': os.getenv('API_KEY'),
-            'Authorization': 'Bearer r.000000010000001.example.access_token',
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'X-Api-App-Id': 'your_app_id'
         }
-        params = {"count": self.count_vacancy, "page": None,
-                  "keyword": self.keyword, "archive": False, }
-        data = requests.get('https://api.superjob.ru/2.0/vacancies/', headers=headers, params=params)
-        return data
+        params = {
+            'keyword': self.keyword,
+            'count': self.count_vacancy
+        }
+        url = 'https://api.superjob.ru/2.0/vacancies/'
+        response = requests.get(url, headers=headers, params=params)
+        return response
 
-    def get_jobs(self, **kwargs):
-        """ Получение вакансий с superjob """
+    def get_jobs(self):
+        """ Получение вакансий с superjob.ru """
         if self.connect().status_code == 200:
             data = self.connect().json()
             list_job = []
             for item in data['objects']:
                 title = item['profession']
                 link = item['link']
-
-                if item['payment_from']:
-                    salary_min = item['payment_from']
-                    salary_max = item['payment_to']
-
-                else:
-                    salary_min = 'Не указана'
-                    salary_max = 'Не указана'
-
-                description = item['candidat']
-                id_vacancy = item['id']
-                #  Создание словарей из вакансий
+                salary_from = item['payment_from']
+                salary_to = item['payment_to']
+                salary_currency = item['currency']
+                description = item['description']
                 jobs = {
-                    'id': id_vacancy,
                     'title': title,
                     'link': link,
-                    'salary_min': salary_min,
-                    'salary_max': salary_max,
+                    'salary_from': salary_from,
+                    'salary_to': salary_to,
+                    'salary_currency': salary_currency,
                     'description': description
                 }
-                list_job.append(jobs)  # Добавляем словари в список
+                list_job.append(jobs)
             self.write_file_vacancy(list_job)
             return list_job
         else:
             print(f"Проблема с сетью, статус ошибки: {self.connect().status_code}")
 
     def write_file_vacancy(self, jobs):
-        """ Создание файла для записи вакансий с сайта superjob """
+        """ Создание файла для записи вакансий с сайта superjob.ru """
         with open('vacancy_list_sjru.json', 'w', encoding='utf-8') as json_file:
             json.dump(jobs, json_file, sort_keys=False, indent=4, ensure_ascii=False)
+
+    def save_vacancy(self, jobs):
+        """ Сохранение вакансий в локальное хранилище """
+        self.vacancies.extend(jobs)
+
+    def find_vacancy(self, keyword):
+        """ Поиск вакансий по ключевому слову """
+        results = []
+        for vacancy in self.vacancies:
+            if keyword.lower() in vacancy['title'].lower() or keyword.lower() in vacancy['description'].lower():
+                results.append(vacancy)
+        return results
+
+    def delete_vacancy(self, vacancy_id):
+        """ Удаление вакансии по идентификатору """
+        for vacancy in self.vacancies:
+            if vacancy['id'] == vacancy_id:
+                self.vacancies.remove(vacancy)
+                break

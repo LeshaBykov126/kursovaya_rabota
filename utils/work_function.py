@@ -5,9 +5,9 @@ from utils.sj_class import SuperJobPlatform
 from utils.vacancy_class import Vacancy
 
 
-def hh_function(keyword, count_vacancy):
-    """ Функция вызова класса для работы с hh ру """
-    get_list = HHJobPlatform(keyword, count_vacancy)  # Создаем экземпляр класса с параметрами пользователя
+def hh_function(keyword_end, count_vacancy):
+    """ Функция вызова класса для работы с hh.ru """
+    get_list = HHJobPlatform(count_vacancy)  # Создаем экземпляр класса с одним аргументом
     list_job = get_list.get_jobs()  # Получаем список вакансий из класса
     print(f'Нашлось {len(list_job)} вакансий.')
     Vacancy.all_class_vacancy = []
@@ -19,7 +19,8 @@ def hh_function(keyword, count_vacancy):
 
 def sj_function(keyword, count_vacancy):
     """ Функция вызова класса для работы с superjob """
-    get_list = SuperJobPlatform(keyword, count_vacancy)  # Создаем экземпляр класса с параметрами пользователя
+    get_list = SuperJobPlatform(keyword=keyword,
+                                count_vacancy=count_vacancy)  # Создаем экземпляр класса с двумя аргументами
     list_job = get_list.get_jobs()  # Получаем список вакансий из класса
     print(f'Нашлось {len(list_job)} вакансий!')
     Vacancy.all_class_vacancy = []
@@ -35,5 +36,6 @@ def sj_function(keyword, count_vacancy):
             for i in data:  # Перебираем список и выводим нужные параметры
                 print('Вакансия:', i['title'])
                 print('Ссылка:', i['link'])
-                print('Зарплата: от', i['salary_min'], ' до', i['salary_max'], '\n')
+                print('Зарплата: от', i['salary_from'], 'до', i['salary_to'])
+                print()
                 print('Чтобы перейти на вакансию, нажми на ссылку')
