@@ -35,7 +35,16 @@ class Vacancy:
                f"Описание вакансии: {self.description}\n"
 
     @classmethod
-    def class_vacancy_ex(cls, reader):
-        """Метод для создания экземпляров класса"""
-        for row in reader:
-            cls(row['id'], row['title'], row['link'], row['salary_min'], row['salary_max'], row['description'])
+    def class_vacancy_ex(cls, list_vacancy):
+        """ Создание экземпляров класса из списка словарей """
+        for row in list_vacancy:
+            if 'id' in row:
+                salary_min = row.get('salary_min')
+                if salary_min is None:
+                    salary_min = 'Не указан'
+                salary_max = row.get('salary_max')
+                if salary_max is None:
+                    salary_max = 'Не указан'
+                cls(row['id'], row['title'], row['link'], salary_min, salary_max, row['description'])
+            else:
+                cls('Не указан', row['title'], row['link'], 'Не указан', 'Не указан', row['description'])
